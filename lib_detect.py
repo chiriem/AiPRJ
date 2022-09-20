@@ -69,6 +69,16 @@ if faces.any():
         # 사진의 기울기 보정
         correction_image, correction_center = doCorrectionImage(image, face_center, eye_centers)
 
+        # 얼굴 상세 객체(윗머리, 귀 밑 머리, 입술) 찾기
+        rois = doDetectObject(faces[0], face_center)
+
+        # 얼굴 검출 사각형 그리기
+        cv2.rectangle(correction_image, rois[0], (255, 0, 255), 2)  # 윗 머리 영역
+        cv2.rectangle(correction_image, rois[1], (255, 0, 255), 2)  # 귀 밑 머리 영역
+
+        # 입술 검출 사각형 그리기
+        cv2.rectangle(correction_image, rois[2], (255, 0, 0), 2)
+
         # 보정된 눈 좌표 그리기
         cv2.circle(correction_image, tuple(correction_center[0]), 5, (0, 255, 0), 2)  # 보정 눈 좌표
         cv2.circle(correction_image, tuple(correction_center[1]), 5, (0, 255, 0), 2)  # 보정 눈 좌표

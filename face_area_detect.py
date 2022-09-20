@@ -69,15 +69,37 @@ if faces.any():
         # 사진의 기울기 보정
         correction_image, correction_center = doCorrectionImage(image, face_center, eye_centers)
 
-        # 보정된 눈 좌표 그리기
-        cv2.circle(correction_image, tuple(correction_center[0]), 5, (0, 255, 0), 2)  # 보정 눈 좌표
-        cv2.circle(correction_image, tuple(correction_center[1]), 5, (0, 255, 0), 2)  # 보정 눈 좌표
+        # 얼굴 상세 객체(윗 머리, 귀 밑 머리, 입술) 찾기
+        # rois[0] : 윗 머리 / rois[1] : 귀 밑 머리 / rois[2] : 입술 / rois[3] : 얼굴 전체
+        rois = doDetectObject(faces[0], face_center)
 
-        # 보정된 얼굴 줌심 그리기
-        cv2.circle(correction_image, face_center, 3, (0, 0, 255), 2)  # 얼굴 중심 좌표
+        # 보정된 사진 전체를 마스크 만들기
+        base_mask = np.full(correction_image.shape[:2], 255, np.uint8)
 
-        # 보정된 얼굴 보여주기
-        cv2.imshow("MyFace_Edit", correction_image)
+        # 얼굴 전체 마스크 만들기(사람의 얼굴은 평균 약 45% 타원으로 구성됨)
+        # 얼굴 영역을 연산하지 않기 위해 색상을 검정색(값 : 0)으로 설정
+        face_mask = draw_ellipse(base_mask, rois[3], 0, -1)
+
+        # 입술 마스크 만들기(사람의 얼굴은 평균 약 45% 타원으로 구성됨)
+        # 입술 영역을 연산하기 위해 색상을 흰색(값 : 255)으로 설정
+        lip_mask = draw_ellipse(np.copy(base_mask), rois[2], 255)
+
+        # 윗 머리용 얼굴 전체 마스크, 귀 밑 머리용 얼굴 전체 마스크, 입술 마스크, 입술 제외용 마스크를 masks 저장
+        masks = [face_mask, face_mask, lip_mask, ~lip_mask]
+
+        # 만들어 놓은 마스크에 얼굴 상세 객체의 크기에 맞게 다시 저장
+        masks = [mask[y:y + h, x:x + w] for mask, (x, y, w, h) in zip(masks, rois)]
+
+        # 최종 마스크 확인
+        for i, mask in enumerate(masks):
+            cv2.imshow('mask' + str(i), mask)
+
+        # 얼굴 영역별 이미지 생성
+        subs = [correction_image[y : y + h, x : x + w] for x, y, w, h in rois]
+
+        # 얼굴 영역 확인
+        for i, sub in enumerate(subs):
+            cv2.imshow('sub'+str(i), sub)
 
     else:
         print("눈 미검출")
