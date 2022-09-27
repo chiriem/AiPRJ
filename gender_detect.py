@@ -1,5 +1,6 @@
 # 생성한 CommUtils에 정의한 함수를 사용하기 위해 사용
 from util.CommUtils import *
+import cv2
 
 # 인식률을 높이기 위한 전처리
 def preprocessing():
